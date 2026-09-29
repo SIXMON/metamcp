@@ -1,7 +1,9 @@
 ---
-title: "Upgrading from v2.4"
-description: "Move an upstream MetaMCP 2.4 instance (Docker Compose) to this fork"
+title: "Upgrading"
+description: "Move an upstream MetaMCP 2.4 instance to this fork, or upgrade this fork (Docker Compose)"
 ---
+
+This page moves an upstream MetaMCP 2.4 instance to this fork. Already on this fork? See [from an earlier version of this fork](#from-an-earlier-version-of-this-fork).
 
 Plan 15 minutes of work, including about one minute of downtime while the migrations run.
 
@@ -59,7 +61,7 @@ grep '^BETTER_AUTH_SECRET=' .env
 
 **Also add:**
 
-- `METAMCP_IMAGE=ghcr.io/sixmon/metamcp:<version>` to pin the version, for example `3.0.0`;
+- `METAMCP_IMAGE=ghcr.io/sixmon/metamcp:<version>` to pin the version, for example `3.1.0`;
 - optionally `ADMIN_EMAILS=admin@example.com`, an administrator that stays one whatever happens;
 - optionally `LOG_LEVEL=info` for the first start, to see the encryption in the logs.
 
@@ -68,7 +70,7 @@ grep '^BETTER_AUTH_SECRET=' .env
 Replace the file with the one of the version you install, then carry over your own changes.
 
 ```bash
-VERSION=3.0.0
+VERSION=3.1.0
 ```
 
 ```bash
@@ -152,5 +154,39 @@ The migrations cannot be undone: going back to 2.4 restores the backup of step 1
 With the manifests of `deploy/kubernetes`, the steps are the same: back up the database, add the encryption key, then change the image.
 
 - The key goes in `METAMCP_SECRETS_ENCRYPTION_KEY`, and reaches the `metamcp-secret` Secret.
-- The image goes in `METAMCP_IMAGE`, for example `ghcr.io/sixmon/metamcp:3.0.0`.
+- The image goes in `METAMCP_IMAGE`, for example `ghcr.io/sixmon/metamcp:3.1.0`.
 - The commands are in `deploy/kubernetes/README.md`.
+
+## From an earlier version of this fork
+
+From 3.0.0, the configuration stays the same: only the image changes.
+
+1. Back up the database:
+
+   ```bash
+   docker exec metamcp-pg pg_dump -U metamcp_user -d metamcp_db -Fc > metamcp-3.0.0.dump
+   ```
+
+2. In `.env`, set `METAMCP_IMAGE=ghcr.io/sixmon/metamcp:3.1.0`.
+3. Pull the image and restart:
+
+   ```bash
+   docker compose pull
+   ```
+
+   ```bash
+   docker compose up -d
+   ```
+
+Migration 0025 runs at startup: it only updates the description of the *Administrators* group.
+
+What changes in 3.1.0:
+
+- Administrators lose access to the personal resources of other users. Namespaces and organisation keys that relied on them stop exposing those resources, without an error: ask the owners to share what must stay in use. See the [upgrade notes of access control](/en/concepts/access-control#upgrading-from-an-earlier-version).
+- Nobody lists or changes the API keys of other users any more, administrators included.
+- Every route is rate limited per client address (`HTTP_RATE_LIMIT_PER_MINUTE`, 3000 per minute by default). Behind a reverse proxy, check [`TRUST_PROXY`](/en/deployment/security#reverse-proxy-and-client-addresses): otherwise every client shares the limit of the proxy.
+- With `BOOTSTRAP_RECREATE_USER=true`, the first start applies the environment password of bootstrap users again.
+
+To roll back, set `METAMCP_IMAGE` back to `ghcr.io/sixmon/metamcp:3.0.0` and run `docker compose up -d`: migration 0025 changes no table, so 3.0.0 runs on the upgraded database.
+
+With Kubernetes, set `METAMCP_IMAGE=ghcr.io/sixmon/metamcp:3.1.0` and deploy again as described in `deploy/kubernetes/README.md`.
