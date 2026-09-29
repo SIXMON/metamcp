@@ -40,9 +40,10 @@ Get MetaMCP running in minutes with Docker Compose:
 
 <CodeGroup>
 ```bash Clone & Setup
-git clone https://github.com/metatool-ai/metamcp.git
+git clone https://github.com/SIXMON/metamcp.git
 cd metamcp
 cp example.env .env
+# then set BETTER_AUTH_SECRET and SECRETS_ENCRYPTION_KEY: openssl rand -base64 32
 ```
 
 ```bash Start with Docker
