@@ -12,7 +12,7 @@
   <a href="https://opensource.org/licenses/MIT" style="text-decoration: none;">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="MIT License" style="max-width: 100%;">
   </a>
-  <a href="https://github.com/metatool-ai/metamcp/pkgs/container/metamcp" style="text-decoration: none;">
+  <a href="https://github.com/SIXMON/metamcp/pkgs/container/metamcp" style="text-decoration: none;">
     <img src="https://img.shields.io/badge/GHCR-available-green.svg?style=flat-square&logo=github" alt="GHCR" style="max-width: 100%;">
   </a>
   <a href="https://deepwiki.com/metatool-ai/metamcp"><img src="https://img.shields.io/badge/DeepWiki-metatool--ai%2Fmetamcp-blue.svg?style=flat-square&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAyCAYAAAAnWDnqAAAAAXNSR0IArs4c6QAAA05JREFUaEPtmUtyEzEQhtWTQyQLHNak2AB7ZnyXZMEjXMGeK/AIi+QuHrMnbChYY7MIh8g01fJoopFb0uhhEqqcbWTp06/uv1saEDv4O3n3dV60RfP947Mm9/SQc0ICFQgzfc4CYZoTPAswgSJCCUJUnAAoRHOAUOcATwbmVLWdGoH//PB8mnKqScAhsD0kYP3j/Yt5LPQe2KvcXmGvRHcDnpxfL2zOYJ1mFwrryWTz0advv1Ut4CJgf5uhDuDj5eUcAUoahrdY/56ebRWeraTjMt/00Sh3UDtjgHtQNHwcRGOC98BJEAEymycmYcWwOprTgcB6VZ5JK5TAJ+fXGLBm3FDAmn6oPPjR4rKCAoJCal2eAiQp2x0vxTPB3ALO2CRkwmDy5WohzBDwSEFKRwPbknEggCPB/imwrycgxX2NzoMCHhPkDwqYMr9tRcP5qNrMZHkVnOjRMWwLCcr8ohBVb1OMjxLwGCvjTikrsBOiA6fNyCrm8V1rP93iVPpwaE+gO0SsWmPiXB+jikdf6SizrT5qKasx5j8ABbHpFTx+vFXp9EnYQmLx02h1QTTrl6eDqxLnGjporxl3NL3agEvXdT0WmEost648sQOYAeJS9Q7bfUVoMGnjo4AZdUMQku50McDcMWcBPvr0SzbTAFDfvJqwLzgxwATnCgnp4wDl6Aa+Ax283gghmj+vj7feE2KBBRMW3FzOpLOADl0Isb5587h/U4gGvkt5v60Z1VLG8BhYjbzRwyQZemwAd6cCR5/XFWLYZRIMpX39AR0tjaGGiGzLVyhse5C9RKC6ai42ppWPKiBagOvaYk8lO7DajerabOZP46Lby5wKjw1HCRx7p9sVMOWGzb/vA1hwiWc6jm3MvQDTogQkiqIhJV0nBQBTU+3okKCFDy9WwferkHjtxib7t3xIUQtHxnIwtx4mpg26/HfwVNVDb4oI9RHmx5WGelRVlrtiw43zboCLaxv46AZeB3IlTkwouebTr1y2NjSpHz68WNFjHvupy3q8TFn3Hos2IAk4Ju5dCo8B3wP7VPr/FGaKiG+T+v+TQqIrOqMTL1VdWV1DdmcbO8KXBz6esmYWYKPwDL5b5FA1a0hwapHiom0r/cKaoqr+27/XcrS5UwSMbQAAAABJRU5ErkJggg==" alt="DeepWiki: MetaMCP"></a>
@@ -25,6 +25,19 @@
 **📢 Latest Update:** This ai-dev branch will be the forward onging dev branch which contains ai agent changes. Please test before you build the image based on this branch. There has been many PRs thanks to the community but merging and reviewing them has been a growing effort too. I decided to include ai changes. At least so far the core functionality works. There is also a community maintained fork (ty a lot!): https://github.com/Umbrella-IT-Group/metamcp
 
 **📢 Update:** *[From the author: apologize for some recent maintainence delay, but will at least keep merging PRs, more background [here](recent-updates.md)]*
+
+### About this fork <!-- omit in toc -->
+
+This is the [SIXMON](https://github.com/SIXMON) fork of MetaMCP, published as `ghcr.io/sixmon/metamcp`. On top of upstream v2.4.22 it adds:
+
+- **Access control**: roles (administrator, editor, viewer), groups, sharing of MCP servers and namespaces, OIDC group mapping ([docs](docs/en/concepts/access-control.mdx)). Administrators manage the organisation, not the personal resources of users.
+- **Secrets at rest**: stored credentials encrypted with a local key or OpenBao / Vault Transit, API keys and tokens stored as digests ([docs](docs/en/deployment/secrets-encryption.mdx)).
+- **Activity log** of administration events ([docs](docs/en/concepts/activity-log.mdx)), and a French locale.
+- **Scoped API keys**: a key limited to some endpoints only reaches their MCP servers.
+- **Security hardening** from a full review ([docs](docs/en/deployment/security.mdx)).
+- **Low memory use**: MCP servers start on demand and are released when unused ([docs](docs/en/deployment/performance.mdx)).
+
+Coming from upstream 2.4? Follow [Upgrading from v2.4](docs/en/deployment/upgrading.mdx).
 
 **MetaMCP** is a MCP proxy that lets you dynamically aggregate MCP servers into a unified MCP server, and apply middlewares. MetaMCP itself is a MCP server so it can be easily plugged into **ANY** MCP clients.
 
@@ -160,11 +173,14 @@ Similar to the official MCP inspector, but with **saved server configs** - MetaM
 Clone repo, prepare `.env`, and start with docker compose:
 
 ```bash
-git clone https://github.com/metatool-ai/metamcp.git
+git clone https://github.com/SIXMON/metamcp.git
 cd metamcp
 cp example.env .env
+# set BETTER_AUTH_SECRET and SECRETS_ENCRYPTION_KEY in .env (openssl rand -base64 32)
 docker compose up -d
 ```
+
+Upgrading an upstream MetaMCP 2.4 instance: see [Upgrading from v2.4](docs/en/deployment/upgrading.mdx).
 
 If you modify APP_URL env vars, make sure you only access from the APP_URL, because MetaMCP enforces CORS policy on the URL, so no other URL is accessible.
 
@@ -184,7 +200,7 @@ It only requires that you have an environment running Docker or a similar altern
 
 1. First, clone the MetaMCP source code, open project in Visual Studio Code.
 ```bash
-git clone https://github.com/metatool-ai/metamcp.git
+git clone https://github.com/SIXMON/metamcp.git
 cd metamcp
 code .
 ```
